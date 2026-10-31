@@ -64,7 +64,9 @@ const config = {
     position: 'start',
     onDragStart: onDragStart,
     onDrop: onDrop,
-    onSnapEnd: onSnapEnd
+    onSnapEnd: onSnapEnd,
+    // Add this line below to fetch the piece graphics from the web automatically:
+    pieceTheme: 'https://chessboardjs.com{piece}.png'
 };
 
 // Initialize the board
