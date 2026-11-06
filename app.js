@@ -3,23 +3,67 @@
   const R = window.ChessRules;
   const B = window.ChessBot;
 
+  /* ---------- Safe storage wrapper ---------- */
+  /* Some browsers (Safari private mode, certain managed Chromebook policies,
+     some file:// contexts) throw on localStorage access instead of just being
+     unavailable. Every call goes through this so a storage failure degrades
+     to an in-memory fallback instead of silently breaking a button. */
+  const memoryStore = {};
+  const Storage = {
+    get(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw !== null ? raw : (fallback !== undefined ? fallback : null);
+      } catch (e) {
+        return key in memoryStore ? memoryStore[key] : (fallback !== undefined ? fallback : null);
+      }
+    },
+    set(key, value) {
+      try { localStorage.setItem(key, value); return true; }
+      catch (e) { memoryStore[key] = value; return false; }
+    }
+  };
+
   /* ---------- Settings (persisted) ---------- */
-  const DEFAULT_SETTINGS = { premove: false, hints: false, autoflip: false, theme: 'classic' };
+  const DEFAULT_SETTINGS = { premove: false, hints: false, autoflip: false, sound: false, theme: 'classic' };
   function loadSettings() {
     try {
-      const raw = localStorage.getItem('chess-settings');
+      const raw = Storage.get('chess-settings', null);
       return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS };
     } catch (e) { return { ...DEFAULT_SETTINGS }; }
   }
-  function saveSettings(s) {
-    try { localStorage.setItem('chess-settings', JSON.stringify(s)); } catch (e) {}
-  }
+  function saveSettings(s) { Storage.set('chess-settings', JSON.stringify(s)); }
   const settings = loadSettings();
+
+  /* ---------- Sound (Web Audio, no asset files) ---------- */
+  let audioCtx = null;
+  function beep(freq, duration, type) {
+    if (!settings.sound) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.value = freq;
+      gain.gain.value = 0.08;
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.stop(audioCtx.currentTime + duration);
+    } catch (e) { /* audio unavailable; fail silently */ }
+  }
+  const Sound = {
+    move: () => beep(440, 0.1, 'triangle'),
+    capture: () => beep(260, 0.15, 'square'),
+    check: () => beep(620, 0.18, 'sawtooth'),
+    gameover: () => beep(180, 0.4, 'sine')
+  };
 
   function applySettingsToUI() {
     document.getElementById('setting-premove').checked = settings.premove;
     document.getElementById('setting-hints').checked = settings.hints;
     document.getElementById('setting-autoflip').checked = settings.autoflip;
+    document.getElementById('setting-sound').checked = settings.sound;
     document.getElementById('setting-theme').value = settings.theme;
     document.body.setAttribute('data-theme', settings.theme);
   }
@@ -33,6 +77,11 @@
   });
   document.getElementById('setting-autoflip').addEventListener('change', e => {
     settings.autoflip = e.target.checked; saveSettings(settings);
+    if (game) render();
+  });
+  document.getElementById('setting-sound').addEventListener('change', e => {
+    settings.sound = e.target.checked; saveSettings(settings);
+    if (settings.sound) Sound.move();
   });
   document.getElementById('setting-theme').addEventListener('change', e => {
     settings.theme = e.target.value; saveSettings(settings);
@@ -53,7 +102,13 @@
   B.BOT_ROSTER.forEach(bot => {
     const row = document.createElement('div');
     row.className = 'bot-row';
-    row.innerHTML = `<span class="bot-name">${bot.name}</span><span class="bot-elo">${bot.elo} ELO</span>`;
+    row.innerHTML = `
+      <span class="bot-avatar">${bot.avatar}</span>
+      <span class="bot-info">
+        <span class="bot-name">${bot.name}</span>
+        <span class="bot-tagline">${bot.tagline}</span>
+      </span>
+      <span class="bot-elo">${bot.elo}<span class="bot-elo-label">ELO</span></span>`;
     row.addEventListener('click', () => startGame({ mode: 'bot', bot }));
     botListEl.appendChild(row);
   });
@@ -124,26 +179,42 @@
     return String(Math.floor(1000 + Math.random() * 9000));
   }
 
+  function readLobbies() {
+    try { return JSON.parse(Storage.get('chess-lobbies', '{}')); }
+    catch (e) { return {}; }
+  }
+  function writeLobbies(lobbies) { Storage.set('chess-lobbies', JSON.stringify(lobbies)); }
+
   document.getElementById('create-lobby-btn').addEventListener('click', () => {
     const pin = randomPin();
-    const lobbies = JSON.parse(localStorage.getItem('chess-lobbies') || '{}');
+    const lobbies = readLobbies();
     lobbies[pin] = { mode: selectedLobbyMode, chaosAssignment, createdAt: Date.now() };
-    localStorage.setItem('chess-lobbies', JSON.stringify(lobbies));
+    writeLobbies(lobbies);
     const disp = document.getElementById('lobby-pin-display');
     disp.innerHTML = `<div>Give this PIN to your friend</div><div class="pin-value">${pin}</div>
+      <button id="copy-pin-btn" class="secondary-btn" style="margin-top:8px">Copy PIN</button>
       <div style="margin-top:8px;color:var(--muted);font-size:0.8rem">
-        This is a same-network, two-device pass setup — each of you opens this page on your own device and plays the board as it's shown to you.
+        This is a same-network, two-device pass setup — each of you opens this page on your own device and plays the board as it's shown to you. No live internet sync yet.
       </div>`;
     disp.classList.remove('hidden');
-    setTimeout(() => startGame({ mode: 'friend', chaos: selectedLobbyMode === 'chaos' ? chaosAssignment : null }), 300);
+    const copyBtn = document.getElementById('copy-pin-btn');
+    copyBtn.addEventListener('click', () => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(pin).then(() => { copyBtn.textContent = 'Copied!'; });
+      } else {
+        copyBtn.textContent = pin;
+      }
+    });
+    setTimeout(() => startGame({ mode: 'friend', chaos: selectedLobbyMode === 'chaos' ? chaosAssignment : null }), 400);
   });
 
   document.getElementById('join-lobby-btn').addEventListener('click', () => {
     const pin = document.getElementById('join-pin-input').value.trim();
-    const lobbies = JSON.parse(localStorage.getItem('chess-lobbies') || '{}');
+    if (!pin) return;
+    const lobbies = readLobbies();
     const lobby = lobbies[pin];
     if (!lobby) {
-      alert("That PIN wasn't found on this device. If your friend is on a different device, you'll both need to enter the same mode manually — there's no live internet sync in this version.");
+      alert("That PIN wasn't found on this device. If your friend is on a different device, you'll both need to pick the same mode manually — there's no live internet sync in this version.");
       return;
     }
     startGame({ mode: 'friend', chaos: lobby.mode === 'chaos' ? lobby.chaosAssignment : null });
@@ -189,6 +260,17 @@
     } else {
       banner.classList.add('hidden');
     }
+
+    const oppLine = document.getElementById('opponent-line');
+    if (game.type === 'bot') {
+      oppLine.innerHTML = `<span class="opp-avatar">${game.bot.avatar}</span> You (White) vs <strong>${game.bot.name}</strong> <span class="opp-elo">${game.bot.elo} ELO</span>`;
+      oppLine.classList.remove('hidden');
+    } else {
+      oppLine.textContent = '👥 Local friend game — pass the device each turn.';
+      oppLine.classList.remove('hidden');
+    }
+
+    computeHint();
     render();
     maybeBotMove();
   }
@@ -261,10 +343,16 @@
       }
     }
 
-    turnIndicator.textContent = game.gameOver ? turnIndicator.textContent : `${game.turn === 'w' ? 'White' : 'Black'} to move`;
+    if (!game.gameOver) {
+      turnIndicator.textContent = game.botThinking
+        ? `${game.bot.name} is thinking…`
+        : `${game.turn === 'w' ? 'White' : 'Black'} to move`;
+    }
     checkIndicator.textContent = (!game.gameOver && !isChaosColor(game.turn) && R.isInCheck(game.board, game.turn)) ? 'Check!' : '';
     capturedByWhiteEl.textContent = game.captured.w.map(p => R.PIECE_GLYPHS.b[p.type]).join(' ');
     capturedByBlackEl.textContent = game.captured.b.map(p => R.PIECE_GLYPHS.w[p.type]).join(' ');
+
+    document.getElementById('material-indicator').textContent = materialDiffLabel();
 
     renderHint();
   }

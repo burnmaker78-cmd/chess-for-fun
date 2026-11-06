@@ -7,15 +7,24 @@
   const R = window.ChessRules;
 
   const BOT_ROSTER = [
-    { id: 'pebble',    name: 'Pebble',       elo: 400,  depth: 1, blunder: 0.45, noise: 120 },
-    { id: 'rookie',    name: 'Rookie Rhea',  elo: 700,  depth: 1, blunder: 0.30, noise: 90  },
-    { id: 'hopper',    name: 'Hopper',       elo: 1000, depth: 2, blunder: 0.20, noise: 70  },
-    { id: 'challenger',name: 'Challenger Cal',elo:1300, depth: 2, blunder: 0.12, noise: 50  },
-    { id: 'strategist',name: 'Strategist Nia',elo:1600, depth: 2, blunder: 0.06, noise: 30  },
-    { id: 'vanguard',  name: 'Vanguard',     elo: 1900, depth: 3, blunder: 0.03, noise: 18  },
-    { id: 'grandbot',  name: 'GrandBot',     elo: 2200, depth: 3, blunder: 0.01, noise: 8   },
-    { id: 'apex',      name: 'Apex',         elo: 2500, depth: 4, blunder: 0,    noise: 3   },
-    { id: 'overlord',  name: 'Overlord',     elo: 2800, depth: 4, blunder: 0,    noise: 0   }
+    { id: 'pebble', name: 'Pebble', elo: 400, depth: 1, blunder: 0.45, noise: 120,
+      avatar: '🪨', tagline: 'Just learned how the horsey moves.' },
+    { id: 'rookie', name: 'Rookie Rhea', elo: 700, depth: 1, blunder: 0.30, noise: 90,
+      avatar: '🐣', tagline: 'Knows the openings exist. Mostly.' },
+    { id: 'hopper', name: 'Hopper', elo: 1000, depth: 2, blunder: 0.20, noise: 70,
+      avatar: '🐇', tagline: 'Will take a free pawn. Won’t say no to a trap.' },
+    { id: 'challenger', name: 'Challenger Cal', elo: 1300, depth: 2, blunder: 0.12, noise: 50,
+      avatar: '🧢', tagline: 'Plays club-level, occasionally overextends.' },
+    { id: 'strategist', name: 'Strategist Nia', elo: 1600, depth: 2, blunder: 0.06, noise: 30,
+      avatar: '🧠', tagline: 'Thinks two moves ahead, sometimes three.' },
+    { id: 'vanguard', name: 'Vanguard', elo: 1900, depth: 3, blunder: 0.03, noise: 18,
+      avatar: '🛡️', tagline: 'Rarely blunders material. Punishes yours.' },
+    { id: 'grandbot', name: 'GrandBot', elo: 2200, depth: 3, blunder: 0.01, noise: 8,
+      avatar: '🎓', tagline: 'Calculates sharply, almost never cracks.' },
+    { id: 'apex', name: 'Apex', elo: 2500, depth: 4, blunder: 0, noise: 3,
+      avatar: '🦅', tagline: 'Deep search, tight evaluation. Brutal endgames.' },
+    { id: 'overlord', name: 'Overlord', elo: 2800, depth: 4, blunder: 0, noise: 0,
+      avatar: '👑', tagline: 'No blunders, no mercy, no noise in its evaluation.' }
   ];
 
   const PIECE_VALUE = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
