@@ -648,5 +648,3 @@ game.captured.b.forEach(p => {
   applySettingsToUI();
   showScreen('screen-dashboard');
 })();
-.piece-img.small { width: 22px; height: 22px; }
-#promotion-choices .piece-img { width: 48px; height: 48px; }
