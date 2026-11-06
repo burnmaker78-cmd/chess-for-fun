@@ -227,5 +227,12 @@ button { font-family: inherit; }
   font-size: 1.6rem; padding: 6px 12px; background: var(--light-square); color: #222;
   border: none; border-radius: 6px; cursor: pointer;
 }
-.square { display: flex; align-items: center; justify-content: center; }
-.piece-img { width: 85%; height: 85%; pointer-events: none; user-select: none; }
+.piece-img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  display: block;
+  margin: auto;
+}
