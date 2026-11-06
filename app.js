@@ -318,6 +318,13 @@ game.captured.b.forEach(p => {
     return false;
   }
 
+  function materialDiffLabel() {
+  const val = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+  const sum = list => list.reduce((s, p) => s + (val[p.type] || 0), 0);
+  const diff = sum(game.captured.w) - sum(game.captured.b);
+  if (diff === 0) return 'Even material';
+  return `${diff > 0 ? 'White' : 'Black'} +${Math.abs(diff)}`;
+}
   function render() {
     boardEl.innerHTML = '';
     const flipped = boardIsFlipped();
