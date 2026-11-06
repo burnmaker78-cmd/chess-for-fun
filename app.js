@@ -1,3 +1,15 @@
+const PIECE_NAMES = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
+
+function makePieceEl(color, type) {
+  const name = PIECE_NAMES[type.toLowerCase()];
+  const side = color === 'w' || color === 'white' ? 'w' : 'b';
+  const img = document.createElement('img');
+  img.src = `pieces/${name}-${side}.svg`;
+  img.alt = `${side === 'w' ? 'white' : 'black'} ${name}`;
+  img.className = 'piece-img';
+  img.draggable = false;
+  return img;
+}
 /* ---------- App shell: navigation, settings, lobby, game wiring ---------- */
 (function () {
   const R = window.ChessRules;
