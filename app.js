@@ -330,10 +330,7 @@ function makePieceEl(color, type) {
         }
 
         if (piece) {
-          const span = document.createElement('span');
-          span.className = `piece ${piece.color === 'w' ? 'white' : 'black'}`;
-          span.textContent = R.PIECE_GLYPHS[piece.color][piece.type];
-          sq.appendChild(span);
+          square.appendChild(makePieceEl(piece.color, piece.type));
         }
 
         const target = game.legalTargets.find(t => t.r === r && t.c === c);
