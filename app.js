@@ -291,8 +291,18 @@ function makePieceEl(color, type) {
   const boardEl = document.getElementById('board');
   const turnIndicator = document.getElementById('turn-indicator');
   const checkIndicator = document.getElementById('check-indicator');
-  const capturedByWhiteEl = document.getElementById('captured-by-white');
-  const capturedByBlackEl = document.getElementById('captured-by-black');
+  capturedByWhiteEl.innerHTML = '';
+game.captured.w.forEach(p => {
+  const img = makePieceEl('b', p.type);
+  img.classList.add('small');
+  capturedByWhiteEl.appendChild(img);
+});
+capturedByBlackEl.innerHTML = '';
+game.captured.b.forEach(p => {
+  const img = makePieceEl('w', p.type);
+  img.classList.add('small');
+  capturedByBlackEl.appendChild(img);
+});
   const moveListEl = document.getElementById('move-list');
   const promotionModal = document.getElementById('promotion-modal');
   const promotionChoices = document.getElementById('promotion-choices');
@@ -330,7 +340,7 @@ function makePieceEl(color, type) {
         }
 
         if (piece) {
-          square.appendChild(makePieceEl(piece.color, piece.type));
+          sq.appendChild(makePieceEl(piece.color, piece.type));
         }
 
         const target = game.legalTargets.find(t => t.r === r && t.c === c);
@@ -590,7 +600,7 @@ function makePieceEl(color, type) {
     const options = chaos ? ['q', 'r', 'b', 'n', 'k'] : ['q', 'r', 'b', 'n'];
     for (const type of options) {
       const btn = document.createElement('button');
-      btn.textContent = R.PIECE_GLYPHS[color][type];
+      btn.appendChild(makePieceEl(color, type));
       btn.addEventListener('click', () => {
         promotionModal.classList.add('hidden');
         const { from, move } = game.pendingPromotion;
@@ -631,3 +641,5 @@ function makePieceEl(color, type) {
   applySettingsToUI();
   showScreen('screen-dashboard');
 })();
+.piece-img.small { width: 22px; height: 22px; }
+#promotion-choices .piece-img { width: 48px; height: 48px; }
