@@ -456,7 +456,7 @@ function makePieceEl(color, type) {
     render();
   }
 
-  function handlePremoveClick(r, c) {
+  function handlePremoveClick(r, c, myColor) {
     if (!settings.premove) return;
     const piece = game.board[r][c];
     if (game.selected) {
@@ -470,7 +470,7 @@ function makePieceEl(color, type) {
         return;
       }
     }
-    if (piece && piece.color === 'w') {
+    if (piece && piece.color === myColor) {
       game.selected = { r, c };
       game.legalTargets = R.legalMovesForSquare(game.board, r, c, game.enPassantTarget, isChaosColor);
     } else {
@@ -543,7 +543,8 @@ function makePieceEl(color, type) {
   }
 
   function resolvePremove() {
-    if (!settings.premove || !game.premoveQueued || game.type !== 'bot' || game.turn !== 'w') return;
+    const mine = game.type === 'online' ? window.LA.myColor : 'w';
+    if (!settings.premove || !game.premoveQueued || (game.type !== 'bot' && game.type !== 'online') || game.turn !== mine) return;
     const { from, to } = game.premoveQueued;
     game.premoveQueued = null;
     const legal = R.legalMovesForSquare(game.board, from.r, from.c, game.enPassantTarget, isChaosColor);
