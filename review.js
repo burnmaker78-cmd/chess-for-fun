@@ -146,12 +146,18 @@
     $('review-progress').classList.remove('hidden');
     const bar = $('review-progress').firstElementChild;
     let i = 0;
-    (function step() {
-      if (i >= g.moves.length) return finish();
-      results.push(analyzeMove(g.moves[i], i));
-      i++;
-      bar.style.width = Math.round(100 * i / g.moves.length) + '%';
-      setTimeout(step, 0);
+        (function step() {
+      try {
+        if (i >= g.moves.length) return finish();
+        results.push(analyzeMove(g.moves[i], i));
+        i++;
+        bar.style.width = Math.round(100 * i / g.moves.length) + '%';
+        setTimeout(step, 0);
+      } catch (e) {
+        $('review-progress').classList.add('hidden');
+        $('review-result').textContent = 'Review error: ' + e.message;
+        console.error(e);
+      }
     })();
   }
 
