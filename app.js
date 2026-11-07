@@ -242,7 +242,7 @@ function makePieceEl(color, type) {
 
   /* ---------- Game state ---------- */
   let game = null; window.getLAGame = () => game;
-  window.LA = { myColor: 'w', remote: false, onMove: null, startGame: o => startGame(o), makeMove: (f, m, p) => makeMove(f, m, p) };
+  window.LA = { myColor: 'w', remote: false, onMove: null, startGame: o => startGame(o), makeMove: (f, m, p) => makeMove(f, m, p), getChaos: () => (selectedLobbyMode === 'chaos' ? chaosAssignment : null) };
 
   function newGameState(opts) {
     return {
