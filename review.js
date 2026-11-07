@@ -26,6 +26,32 @@
     blunder:    { label: 'Blunder',    color: '#d94a4a', sym: '??' }
   };
   const VAL = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
+  // review-only sounds: brilliant.mp3, rook.mp3, queen.mp3
+  const RV_SOUNDS = { brilliant: 'sounds/brilliant.mp3', rook: 'sounds/rook.mp3', queen: 'sounds/queen.mp3' };
+  const rvAudio = {};
+  let lastAudio = null;
+  function soundOn() {
+    try { return !!JSON.parse(localStorage.getItem('chess-settings') || '{}').sound; } catch (e) { return false; }
+  }
+  function playReview(key) {
+    if (!soundOn()) return;
+    try {
+      if (lastAudio) { lastAudio.pause(); lastAudio.currentTime = 0; }
+      const a = rvAudio[key] || (rvAudio[key] = new Audio(RV_SOUNDS[key]));
+      a.currentTime = 0;
+      lastAudio = a;
+      a.play().catch(() => {});
+    } catch (e) {}
+  }
+  function reviewSound(r, m) {
+    if (r.cls === 'brilliant') return playReview('brilliant');
+    const cap = m.before[m.move.r][m.move.c];
+    const mine = g.type === 'bot' ? 'w' : g.type === 'online' ? window.LA.myColor : null;
+    if (cap && (!mine || cap.color === mine)) {
+      if (cap.type === 'q') playReview('queen');
+      else if (cap.type === 'r') playReview('rook');
+    }
+  }
 
   function badge(key) {
     const c = CLASSES[key];
@@ -98,7 +124,7 @@
   const $ = id => document.getElementById(id);
   let results = [], cur = 0, g = null;
 
-  function show(i) {
+    function show(i, silent) {
     if (!results.length) return;
     cur = Math.max(0, Math.min(results.length - 1, i));
     const r = results[cur], m = g.moves[cur], c = CLASSES[r.cls];
@@ -111,6 +137,7 @@
     document.querySelectorAll('#review-moves li').forEach((li, k) => li.classList.toggle('on', k === cur));
     const on = document.querySelector('#review-moves li.on');
     if (on) on.scrollIntoView({ block: 'nearest' });
+    if (!silent) reviewSound(r, m);
   }
 
   function finish() {
@@ -130,7 +157,7 @@
     document.querySelectorAll('#review-moves li').forEach(li => li.addEventListener('click', () => show(+li.dataset.i)));
     $('review-progress').classList.add('hidden');
     $('review-body').classList.remove('hidden');
-    show(0);
+    show(0, true);
   }
 
   function start() {
