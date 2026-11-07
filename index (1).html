@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAChess</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="lachess.css">
+</head>
+<body>
+<div class="bg-orbs"><i></i><i></i><i></i></div>
+
+<!-- ============ HOME ============ -->
+<div id="screen-dashboard" class="screen">
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-pieces"><span>♞</span><span>♛</span><span>♜</span><span>♝</span><span>♚</span><span>♟</span></div>
+      <div class="logo">♞</div>
+      <h1 class="brand">LA<span>Chess</span></h1>
+      <p class="subtitle">Free chess. Smart bots. Real game reviews.</p>
+    </div>
+    <div class="stats">
+      <div><b>9</b><small>Bots</small></div>
+      <div><b>2800</b><small>Top ELO</small></div>
+      <div><b>100%</b><small>Free</small></div>
+      <div><b>★</b><small>Game Review</small></div>
+    </div>
+    <div class="card-grid">
+      <button class="big-card c1" data-nav="screen-bot-select">
+        <span class="card-icon">🤖</span>
+        <span class="card-title">Play a Bot</span>
+        <span class="card-desc">Face 9 personalities from Pebble (400) to Overlord (2800), then review your game.</span>
+      </button>
+      <button class="big-card c2" data-nav="screen-lobby">
+        <span class="card-icon">👥</span>
+        <span class="card-title">Play a Friend</span>
+        <span class="card-desc">Create a lobby with a PIN, or join one. Pass-and-play anywhere.</span>
+      </button>
+      <button class="big-card c3" data-nav="screen-settings">
+        <span class="card-icon">⚙️</span>
+        <span class="card-title">Settings</span>
+        <span class="card-desc">Premove, auto-flip, sound and board themes.</span>
+      </button>
+    </div>
+    <p class="foot">After any bot game, hit <b>Review</b> to see Brilliant, Great, Best, Mistake and Blunder moves.</p>
+  </div>
+</div>
+
+<!-- ============ BOT SELECT ============ -->
+<div id="screen-bot-select" class="screen hidden">
+  <div class="wrap">
+    <button class="back-btn" data-nav="screen-dashboard">&larr; Back</button>
+    <h2>Choose a bot</h2>
+    <div id="bot-list" class="bot-list"></div>
+  </div>
+</div>
+
+<!-- ============ LOBBY ============ -->
+<div id="screen-lobby" class="screen hidden">
+  <div class="wrap">
+    <button class="back-btn" data-nav="screen-dashboard">&larr; Back</button>
+    <h2>Play a Friend</h2>
+    <p class="subtitle">Pass-and-play on one device, or match PINs across two devices.</p>
+    <div class="lobby-tabs">
+      <button class="tab-btn active" data-tab="create">Create Lobby</button>
+      <button class="tab-btn" data-tab="join">Enter Lobby PIN</button>
+    </div>
+    <div id="tab-create" class="tab-panel">
+      <label class="field-label">Game mode</label>
+      <div class="mode-row">
+        <button class="mode-btn active" data-mode="normal">Normal Chess</button>
+        <button class="mode-btn" data-mode="chaos-locked">⚡ Chaos Mode <span class="lock">🔒</span></button>
+      </div>
+      <p id="chaos-note" class="hint-text hidden"></p>
+      <button id="create-lobby-btn" class="primary-btn">Create Lobby</button>
+      <div id="lobby-pin-display" class="pin-display hidden"></div>
+    </div>
+    <div id="tab-join" class="tab-panel hidden">
+      <label class="field-label">Enter the PIN your friend gave you</label>
+      <input id="join-pin-input" class="pin-input" maxlength="4" placeholder="0000" inputmode="numeric">
+      <button id="join-lobby-btn" class="primary-btn">Join</button>
+    </div>
+  </div>
+</div>
+
+<div id="chaos-unlock-modal" class="modal hidden">
+  <div class="modal-content">
+    <p>Chaos Mode needs an early-access code.</p>
+    <input id="chaos-code-input" class="pin-input" maxlength="4" placeholder="0000" inputmode="numeric">
+    <div class="modal-actions">
+      <button id="chaos-unlock-cancel" class="secondary-btn">Cancel</button>
+      <button id="chaos-unlock-submit" class="primary-btn">Unlock</button>
+    </div>
+    <p id="chaos-unlock-error" class="error-text hidden">Wrong code.</p>
+  </div>
+</div>
+
+<!-- Chaos setup: who gets it + the best-move arrow (Chaos only) -->
+<div id="chaos-assign-modal" class="modal hidden">
+  <div class="modal-content">
+    <p>Who gets Chaos Mode?</p>
+    <div class="modal-actions">
+      <button id="chaos-assign-white" class="secondary-btn">White only</button>
+      <button id="chaos-assign-black" class="secondary-btn">Black only</button>
+      <button id="chaos-assign-both" class="secondary-btn">Both</button>
+    </div>
+    <div class="setting-row chaos-opt">
+      <div>
+        <div class="setting-title">Best-move arrow</div>
+        <div class="setting-desc">Chaos Mode only: shows a small arrow for the engine's top move.</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="setting-hints"><span class="slider"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS ============ -->
+<div id="screen-settings" class="screen hidden">
+  <div class="wrap">
+    <button class="back-btn" data-nav="screen-dashboard">&larr; Back</button>
+    <h2>Settings</h2>
+    <div class="settings-list">
+      <div class="setting-row">
+        <div><div class="setting-title">Allow premove</div>
+        <div class="setting-desc">Queue your next move during the bot's turn.</div></div>
+        <label class="switch"><input type="checkbox" id="setting-premove"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-title">Auto-flip board</div>
+        <div class="setting-desc">Board faces whoever's turn it is (friend games).</div></div>
+        <label class="switch"><input type="checkbox" id="setting-autoflip"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-title">Sound</div>
+        <div class="setting-desc">Short tones for moves, captures and check.</div></div>
+        <label class="switch"><input type="checkbox" id="setting-sound"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-title">Board theme</div>
+        <div class="setting-desc">Change the square colors.</div></div>
+        <select id="setting-theme">
+          <option value="classic">Classic brown</option>
+          <option value="green">Tournament green</option>
+          <option value="blue">Ice blue</option>
+          <option value="gray">Slate gray</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAME ============ -->
+<div id="screen-game" class="screen hidden">
+  <div class="wrap">
+    <button class="back-btn" data-nav="screen-dashboard">&larr; Leave game</button>
+    <div id="chaos-banner" class="chaos-banner hidden"></div>
+    <div id="opponent-line" class="opponent-line hidden"></div>
+    <div class="status-bar">
+      <span id="turn-indicator">White to move</span>
+      <span id="check-indicator"></span>
+      <span id="material-indicator" class="material-indicator"></span>
+    </div>
+    <div id="board-wrap" class="board-wrap">
+      <div id="board" class="board"></div>
+      <svg id="hint-overlay" class="hint-overlay" viewBox="0 0 800 800"></svg>
+    </div>
+    <div class="controls">
+      <button id="undo-btn">Undo</button>
+      <button id="reset-btn">New Game</button>
+      <button id="review-btn" class="review-btn">★ Review</button>
+    </div>
+    <div class="panels">
+      <div class="panel"><h3>Captured by White</h3><div id="captured-by-white" class="captured-row"></div></div>
+      <div class="panel"><h3>Captured by Black</h3><div id="captured-by-black" class="captured-row"></div></div>
+    </div>
+    <ol id="move-list" class="move-list"></ol>
+  </div>
+</div>
+
+<!-- ============ REVIEW ============ -->
+<div id="screen-review" class="screen hidden">
+  <div class="wrap">
+    <button class="back-btn" data-nav="screen-dashboard">&larr; Home</button>
+    <h2>Game Review</h2>
+    <p id="review-result" class="subtitle"></p>
+    <div id="review-progress" class="progress hidden"><div></div></div>
+    <div id="review-body" class="hidden">
+      <div class="acc-row">
+        <div class="acc"><b id="acc-w">–</b><small>White accuracy</small></div>
+        <div class="acc"><b id="acc-b">–</b><small>Black accuracy</small></div>
+      </div>
+      <div id="review-counts" class="counts"></div>
+      <div id="review-board" class="board mini"></div>
+      <p id="review-note" class="rv-note"></p>
+      <div class="controls">
+        <button id="rv-prev">◀ Prev</button>
+        <button id="rv-next">Next ▶</button>
+      </div>
+      <ol id="review-moves" class="rv-moves"></ol>
+    </div>
+  </div>
+</div>
+
+<div id="promotion-modal" class="modal hidden">
+  <div class="modal-content">
+    <p>Promote pawn to:</p>
+    <div class="promotion-choices" id="promotion-choices"></div>
+  </div>
+</div>
+
+<div id="gameover-modal" class="modal hidden">
+  <div class="modal-content">
+    <p id="gameover-text">Game over</p>
+    <div class="modal-actions">
+      <button id="gameover-review" class="primary-btn">★ Review game</button>
+      <button id="gameover-rematch" class="secondary-btn">Rematch</button>
+      <button id="gameover-dashboard" class="secondary-btn">Home</button>
+    </div>
+  </div>
+</div>
+
+<script src="rules.js"></script>
+<script src="bot.js"></script>
+<script src="app.js"></script>
+<script src="review.js"></script>
+</body>
+</html>
