@@ -80,6 +80,14 @@
       <input id="join-pin-input" class="pin-input" maxlength="4" placeholder="0000" inputmode="numeric">
       <button id="join-lobby-btn" class="primary-btn">Join</button>
     </div>
+    <div class="panel" style="margin-top:20px">
+     <h3>Play online (2 devices)</h3>
+     <button id="online-host-btn" class="primary-btn">Host a game</button>
+     <input id="online-pin-input" class="pin-input" maxlength="4" placeholder="PIN" inputmode="numeric">
+     <button id="online-join-btn" class="secondary-btn">Join with PIN</button>
+     <p id="online-status" class="hint-text"></p>
+    </div>
+    
   </div>
 </div>
 
@@ -224,5 +232,7 @@
 <script src="app.js"></script>
 <script src="review.js"></script>
 <script src="arrows.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="online.js"></script>
 </body>
 </html>
