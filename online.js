@@ -24,9 +24,8 @@
   function begin(color, chaos) {
     window.LA.myColor = color;
     window.LA.startGame({ mode: 'online', chaos: chaos || null });
-    $('opponent-line').textContent = '🌐 Online game — you are ' + (color === 'w' ? 'White' : 'Black') +
-      (chaos ? ' · ⚡ Chaos Mode for ' + who(chaos) : '');
-    st(chaos ? 'Connected! Chaos Mode is ON for ' + who(chaos) + '.' : 'Connected!');
+    $('opponent-line').textContent = '🌐 Online game — you are ' + (color === 'w' ? 'White' : 'Black');
+    st('Connected!');
   }
 
   function wire(c) {
