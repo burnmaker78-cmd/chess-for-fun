@@ -276,12 +276,7 @@ function makePieceEl(color, type) {
     document.getElementById('lobby-pin-display').classList.add('hidden');
     showScreen('screen-game');
     const banner = document.getElementById('chaos-banner');
-    if (game.chaosAssignment) {
-      banner.textContent = `⚡ CHAOS MODE ACTIVE — ${game.chaosAssignment === 'both' ? 'both sides' : game.chaosAssignment === 'w' ? 'White' : 'Black'} can move anywhere, ignore check, and promote to king.`;
-      banner.classList.remove('hidden');
-    } else {
-      banner.classList.add('hidden');
-    }
+    banner.classList.add('hidden');
 
     const oppLine = document.getElementById('opponent-line');
     if (game.type === 'bot') {
