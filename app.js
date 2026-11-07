@@ -260,7 +260,8 @@ function makePieceEl(color, type) {
       gameOver: false,
       pendingPromotion: null,
       premoveQueued: null, // {from, to}
-      hintMove: null
+      hintMove: null,
+      moves: []
     };
   }
 
@@ -502,6 +503,7 @@ function makePieceEl(color, type) {
     }
 
     pushHistory();
+    game.moves.push({ from, move, promotionType, color: piece.color, before: R.cloneBoard(game.board), ep: game.enPassantTarget });
     const { board: newBoard, captured } = R.applyMove(game.board, from, { r: move.r, c: move.c }, move, promotionType);
 
     if (captured) {
@@ -634,7 +636,7 @@ function makePieceEl(color, type) {
     const prev = game.history.pop();
     game.board = prev.board; game.turn = prev.turn; game.enPassantTarget = prev.enPassantTarget;
     game.lastMove = prev.lastMove; game.captured = prev.captured;
-    game.moveLog.pop();
+    game.moveLog.pop(); game.moves.pop();
     game.gameOver = false;
     game.selected = null; game.legalTargets = []; game.premoveQueued = null;
     renderMoveLog();
