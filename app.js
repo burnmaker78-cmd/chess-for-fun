@@ -241,7 +241,7 @@ function makePieceEl(color, type) {
   });
 
   /* ---------- Game state ---------- */
-  let game = null; // current game session object
+  let game = null; window.getLAGame = () => game;
 
   function newGameState(opts) {
     return {
