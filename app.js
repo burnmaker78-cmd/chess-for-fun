@@ -433,12 +433,12 @@ function makePieceEl(color, type) {
 
   /* ---------- Interaction ---------- */
   function onSquareClick(r, c) {
-    if (game.type === 'online' && game.turn !== window.LA.myColor) return;
     if (game.gameOver || game.pendingPromotion) return;
-    if (game.type === 'bot' && game.turn !== 'w') {
-      handlePremoveClick(r, c);
-      return;
-    }
+    const myTurnColor = game.type === 'online' ? window.LA.myColor : (game.type === 'bot' ? 'w' : null);
+    if (myTurnColor && game.turn !== myTurnColor) {
+     handlePremoveClick(r, c, myTurnColor);
+     return;
+   }
 
     const piece = game.board[r][c];
     const target = game.legalTargets.find(t => t.r === r && t.c === c);
