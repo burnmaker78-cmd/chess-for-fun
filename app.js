@@ -72,12 +72,24 @@ function makePieceEl(color, type) {
       osc.stop(audioCtx.currentTime + duration);
     } catch (e) { /* audio unavailable; fail silently */ }
   }
-  const Sound = {
-    move: () => beep(440, 0.1, 'triangle'),
-    capture: () => beep(260, 0.15, 'square'),
-    check: () => beep(620, 0.18, 'sawtooth'),
-    gameover: () => beep(180, 0.4, 'sine')
-  };
+    const SOUND_FILES = { move: 'sounds/move.mp3', capture: 'sounds/capture.mp3', check: 'sounds/check.mp3', gameover: 'sounds/gameover.mp3' };
+    const tones = {
+      move: () => beep(440, 0.1, 'triangle'),
+      capture: () => beep(260, 0.15, 'square'),
+      check: () => beep(620, 0.18, 'sawtooth'),
+      gameover: () => beep(180, 0.4, 'sine')
+    };
+    const Sound = {};
+    Object.keys(SOUND_FILES).forEach(k => {
+      const a = new Audio(SOUND_FILES[k]);
+      let ok = true;
+      a.addEventListener('error', () => { ok = false; });
+      Sound[k] = () => {
+        if (!settings.sound) return;
+        if (ok) a.cloneNode().play().catch(() => tones[k]());
+        else tones[k]();
+      };
+    });
 
   function applySettingsToUI() {
     document.getElementById('setting-premove').checked = settings.premove;
@@ -533,6 +545,11 @@ function makePieceEl(color, type) {
     game.pendingPromotion = null;
 
     checkGameEnd();
+    if (!game.gameOver) {
+      if (!isChaosColor(game.turn) && R.isInCheck(game.board, game.turn)) Sound.check();
+      else if (captured) Sound.capture();
+      else Sound.move();
+    }
     computeHint();
     render();
 
@@ -606,6 +623,7 @@ function makePieceEl(color, type) {
 
   function endGame(message) {
     game.gameOver = true;
+    Sound.gameover();
     turnIndicator.textContent = message;
     checkIndicator.textContent = '';
     document.getElementById('gameover-text').textContent = message;
