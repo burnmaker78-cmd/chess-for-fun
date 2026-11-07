@@ -1,15 +1,23 @@
+/* ---------- SVG piece helper ---------- */
 const PIECE_NAMES = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
+const pieceImgCache = {};
 
 function makePieceEl(color, type) {
-  const name = PIECE_NAMES[type.toLowerCase()];
-  const side = color === 'w' || color === 'white' ? 'w' : 'b';
-  const img = document.createElement('img');
-  img.src = `pieces/${name}-${side}.svg`;
-  img.alt = `${side === 'w' ? 'white' : 'black'} ${name}`;
-  img.className = 'piece-img';
-  img.draggable = false;
-  return img;
+  const name = PIECE_NAMES[String(type).toLowerCase()];
+  const side = String(color).toLowerCase().startsWith('w') ? 'w' : 'b';
+  const key = `${name}-${side}`;
+
+  if (!pieceImgCache[key]) {
+    const base = new Image();
+    base.src = `pieces/${key}.svg`;
+    base.alt = `${side === 'w' ? 'white' : 'black'} ${name}`;
+    base.className = 'piece-img';
+    base.draggable = false;
+    pieceImgCache[key] = base;
+  }
+  return pieceImgCache[key].cloneNode();
 }
+
 /* ---------- App shell: navigation, settings, lobby, game wiring ---------- */
 (function () {
   const R = window.ChessRules;
@@ -291,18 +299,8 @@ function makePieceEl(color, type) {
   const boardEl = document.getElementById('board');
   const turnIndicator = document.getElementById('turn-indicator');
   const checkIndicator = document.getElementById('check-indicator');
-  capturedByWhiteEl.innerHTML = '';
-game.captured.w.forEach(p => {
-  const img = makePieceEl('b', p.type);
-  img.classList.add('small');
-  capturedByWhiteEl.appendChild(img);
-});
-capturedByBlackEl.innerHTML = '';
-game.captured.b.forEach(p => {
-  const img = makePieceEl('w', p.type);
-  img.classList.add('small');
-  capturedByBlackEl.appendChild(img);
-});
+  const capturedByWhiteEl = document.getElementById('captured-by-white');
+  const capturedByBlackEl = document.getElementById('captured-by-black');
   const moveListEl = document.getElementById('move-list');
   const promotionModal = document.getElementById('promotion-modal');
   const promotionChoices = document.getElementById('promotion-choices');
@@ -318,13 +316,24 @@ game.captured.b.forEach(p => {
     return false;
   }
 
+  /* Material advantage readout, e.g. "White +3" */
   function materialDiffLabel() {
-  const val = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-  const sum = list => list.reduce((s, p) => s + (val[p.type] || 0), 0);
-  const diff = sum(game.captured.w) - sum(game.captured.b);
-  if (diff === 0) return 'Even material';
-  return `${diff > 0 ? 'White' : 'Black'} +${Math.abs(diff)}`;
-}
+    const val = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+    const sum = list => list.reduce((s, p) => s + (val[p.type] || 0), 0);
+    const diff = sum(game.captured.w) - sum(game.captured.b);
+    if (diff === 0) return 'Even material';
+    return `${diff > 0 ? 'White' : 'Black'} +${Math.abs(diff)}`;
+  }
+
+  function fillCapturedTray(trayEl, pieces, color) {
+    trayEl.innerHTML = '';
+    pieces.forEach(p => {
+      const img = makePieceEl(color, p.type);
+      img.classList.add('small');
+      trayEl.appendChild(img);
+    });
+  }
+
   function render() {
     boardEl.innerHTML = '';
     const flipped = boardIsFlipped();
@@ -375,8 +384,10 @@ game.captured.b.forEach(p => {
         : `${game.turn === 'w' ? 'White' : 'Black'} to move`;
     }
     checkIndicator.textContent = (!game.gameOver && !isChaosColor(game.turn) && R.isInCheck(game.board, game.turn)) ? 'Check!' : '';
-    capturedByWhiteEl.textContent = game.captured.w.map(p => R.PIECE_GLYPHS.b[p.type]).join(' ');
-    capturedByBlackEl.textContent = game.captured.b.map(p => R.PIECE_GLYPHS.w[p.type]).join(' ');
+
+    /* White captured black pieces, Black captured white pieces */
+    fillCapturedTray(capturedByWhiteEl, game.captured.w, 'b');
+    fillCapturedTray(capturedByBlackEl, game.captured.b, 'w');
 
     document.getElementById('material-indicator').textContent = materialDiffLabel();
 
