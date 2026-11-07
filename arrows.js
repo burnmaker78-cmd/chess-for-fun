@@ -59,7 +59,10 @@
     });
   }
 
-  board.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => {
+  const g = document.getElementById('screen-game');
+  if (g && !g.classList.contains('hidden')) e.preventDefault();
+}, true);
   board.addEventListener('mousedown', e => {
     if (e.button === 2) { start = sqAt(e); e.preventDefault(); }
     else if (arrows.length) { arrows = []; draw(); }
