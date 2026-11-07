@@ -242,6 +242,7 @@ function makePieceEl(color, type) {
 
   /* ---------- Game state ---------- */
   let game = null; window.getLAGame = () => game;
+  window.LA = { myColor: 'w', remote: false, onMove: null, startGame: o => startGame(o), makeMove: (f, m, p) => makeMove(f, m, p) };
 
   function newGameState(opts) {
     return {
