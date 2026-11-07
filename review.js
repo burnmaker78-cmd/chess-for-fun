@@ -1,7 +1,18 @@
 /* LAChess game review: analyzes recorded moves with the bot engine. */
 (function () {
   const R = window.ChessRules, B = window.ChessBot;
-  const ICON_DIR = null; // set to 'icons/' to use your own files, e.g. icons/brilliant.svg
+  const ICON_DIR = 'icons/'; // folder that holds your icon files
+  const ICON_FILES = {
+    brilliant:  'brilliant.svg',
+    great:      'great_find.svg',
+    best:       'best.svg',
+    excellent:  'excellent.svg',
+    good:       'good.svg',
+    book:       'book.svg',
+    inaccuracy: 'inaccuracy.svg',
+    mistake:    'mistake.svg',
+    blunder:    'blunder.svg'
+  };
 
   const CLASSES = {
     brilliant:  { label: 'Brilliant',  color: '#1baca6', sym: '!!' },
@@ -18,7 +29,7 @@
 
   function badge(key) {
     const c = CLASSES[key];
-    if (ICON_DIR) return `<img class="bdg" src="${ICON_DIR}${key}.svg" alt="${c.label}">`;
+    if (ICON_DIR) return `<img class="bdg" src="${ICON_DIR}${ICON_FILES[key] || key + '.svg'}" alt="${c.label}">`;
     return `<svg class="bdg badge-pop" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="${c.color}"/><text x="12" y="16.5" text-anchor="middle" font-size="${c.sym.length > 1 ? 11 : 13}" font-weight="800" fill="#fff" font-family="Arial,sans-serif">${c.sym}</text></svg>`;
   }
 
