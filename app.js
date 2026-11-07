@@ -313,6 +313,7 @@ function makePieceEl(color, type) {
   function rankLabel(r) { return 8 - r; }
 
   function boardIsFlipped() {
+    if (game.type === 'online') return window.LA.myColor === 'b';
     if (game.type === 'bot') return false;
     if (settings.autoflip) return game.turn === 'b';
     return false;
@@ -396,40 +397,37 @@ function makePieceEl(color, type) {
     renderHint();
   }
 
-  function renderHint() {
+      function renderHint() {
     hintOverlay.innerHTML = '';
     if (!settings.hints || game.gameOver || !game.hintMove) return;
     const flipped = boardIsFlipped();
-    const sq = 100;
     const toDisplay = (r, c) => {
       const dr = flipped ? 7 - r : r, dc = flipped ? 7 - c : c;
-      return { x: dc * sq + sq / 2, y: dr * sq + sq / 2 };
+      return { x: dc * 100 + 50, y: dr * 100 + 50 };
     };
     const from = toDisplay(game.hintMove.from.r, game.hintMove.from.c);
     const to = toDisplay(game.hintMove.move.r, game.hintMove.move.c);
+    const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    const ux = (to.x - from.x) / len, uy = (to.y - from.y) / len;
+    const head = 26, half = 14;
+    const tip = { x: to.x - ux * 8, y: to.y - uy * 8 };
+    const base = { x: tip.x - ux * head, y: tip.y - uy * head };
 
     const ns = 'http://www.w3.org/2000/svg';
-    const marker = document.createElementNS(ns, 'marker');
-    marker.setAttribute('id', 'arrowhead');
-    marker.setAttribute('markerWidth', '10');
-    marker.setAttribute('markerHeight', '10');
-    marker.setAttribute('refX', '6');
-    marker.setAttribute('refY', '5');
-    marker.setAttribute('orient', 'auto');
-    marker.innerHTML = '<polygon points="0,0 10,5 0,10" fill="#2ecc71"/>';
-    const defs = document.createElementNS(ns, 'defs');
-    defs.appendChild(marker);
-    hintOverlay.appendChild(defs);
-
     const line = document.createElementNS(ns, 'line');
     line.setAttribute('x1', from.x); line.setAttribute('y1', from.y);
-    line.setAttribute('x2', to.x); line.setAttribute('y2', to.y);
+    line.setAttribute('x2', base.x); line.setAttribute('y2', base.y);
     line.setAttribute('stroke', '#2ecc71');
-    line.setAttribute('stroke-width', '14');
-    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('stroke-width', '8');
     line.setAttribute('opacity', '0.75');
-    line.setAttribute('marker-end', 'url(#arrowhead)');
     hintOverlay.appendChild(line);
+
+    const tri = document.createElementNS(ns, 'polygon');
+    tri.setAttribute('points',
+      `${tip.x},${tip.y} ${base.x - uy * half},${base.y + ux * half} ${base.x + uy * half},${base.y - ux * half}`);
+    tri.setAttribute('fill', '#2ecc71');
+    tri.setAttribute('opacity', '0.75');
+    hintOverlay.appendChild(tri);
   }
 
   function computeHint() {
@@ -440,6 +438,7 @@ function makePieceEl(color, type) {
 
   /* ---------- Interaction ---------- */
   function onSquareClick(r, c) {
+    if (game.type === 'online' && game.turn !== window.LA.myColor) return;
     if (game.gameOver || game.pendingPromotion) return;
     if (game.type === 'bot' && game.turn !== 'w') {
       handlePremoveClick(r, c);
@@ -505,6 +504,7 @@ function makePieceEl(color, type) {
 
     pushHistory();
     game.moves.push({ from, move, promotionType, color: piece.color, before: R.cloneBoard(game.board), ep: game.enPassantTarget });
+    if (window.LA.onMove && !window.LA.remote) window.LA.onMove(from, move, promotionType);
     const { board: newBoard, captured } = R.applyMove(game.board, from, { r: move.r, c: move.c }, move, promotionType);
 
     if (captured) {
