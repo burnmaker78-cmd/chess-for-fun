@@ -559,7 +559,7 @@ function makePieceEl(color, type) {
       let promo = null;
       if (picked.move.promotion) promo = 'q';
       makeMove(picked.from, picked.move, promo);
-    }, 350);
+    }, settings.premove ? 900 + Math.random() * 900 : 400);
   }
 
   function logMove(piece, from, move, captured, promotionType) {
