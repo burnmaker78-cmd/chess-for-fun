@@ -88,3 +88,4 @@ body { background: radial-gradient(circle at 20% 0%, #2b2b4a 0%, #1a1a22 55%, #1
 .rv-moves li.on { background: var(--accent); color: #fff; }
 .rv-moves .mn { color: var(--muted); min-width: 28px; }
 .badge-pop { animation: pop .3s ease; }
+.hidden { display: none !important; }
