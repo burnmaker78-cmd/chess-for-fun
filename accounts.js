@@ -23,6 +23,9 @@
     return btoa(salt + pw);
   }
   async function signup(name, pw) {
+    if (window.Cloud) return window.Cloud.login(name, pw);
+    const u = users()[name.toLowerCase()];
+    if (window.Cloud) return window.Cloud.signup(name, pw);
     if (!/^[A-Za-z0-9_]{3,16}$/.test(name)) return 'Username: 3-16 letters, numbers or _';
     if (pw.length < 4) return 'Password must be at least 4 characters';
     const all = users(), key = name.toLowerCase();
@@ -79,7 +82,7 @@
     m.addEventListener('click', e => { if (e.target === m) close(); });
     if (u) {
       m.innerHTML = `<div class="lac-box"><h3>${badge(eloOf(u))}${u.name}</h3><p>Elo <b>${eloOf(u)}</b><br>${u.w} wins · ${u.l} losses · ${u.d} draws</p><button id="lo">Log out</button><button class="alt" id="cl">Close</button></div>`;
-      m.querySelector('#lo').onclick = () => { put('lac-session', null); renderCorner(); close(); };
+      m.querySelector('#lo').onclick = () => { if (window.Cloud) window.Cloud.logout(); put('lac-session', null); renderCorner(); close(); };
       m.querySelector('#cl').onclick = close;
     } else {
       const su = mode === 'signup';
@@ -108,6 +111,7 @@
       rec.elo = Math.max(100, Math.round(before + (before >= 2400 ? 16 : 32) * (score - exp)));
     }
     put('lac-users', all); renderCorner();
+    if (window.Cloud) window.Cloud.saveElo(rec);
     const after = eloOf(rec), d = after - before;
     toast(`Rating: <b>${after}</b> (${d >= 0 ? '+' : ''}${d})`);
   }
@@ -271,5 +275,6 @@
     window.LA.startGame({ mode: 'bot', bot: rankedBot(eloOf(u)) });
   };
 
+  window.LA.refresh = renderCorner;
   renderCorner();
 })();
