@@ -1,10 +1,10 @@
 /* LAChess shared accounts via Firebase (Auth + Firestore). Paste your firebaseConfig below. */
 (function () {
   const firebaseConfig = {
-    apiKey: 'PASTE_HERE',
-    authDomain: 'PASTE_HERE',
-    projectId: 'PASTE_HERE',
-    appId: 'PASTE_HERE'
+    apiKey: 'AIzaSyBfMBb1bAXxrtCbDdnzmvU4E7Xv3CB8gx4',
+    authDomain: 'la-chess.firebaseapp.com',
+    projectId: 'la-chess',
+    appId: '1:133539397387:web:0e25a8f20fd6e1a34fec0e'
   };
   if (!window.firebase || firebaseConfig.apiKey === 'PASTE_HERE') return; // not set up yet: local accounts keep working
 
