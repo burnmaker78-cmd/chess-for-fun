@@ -623,6 +623,7 @@ function makePieceEl(color, type) {
 
   function endGame(message) {
     game.gameOver = true;
+    if (window.LA && window.LA.onEnd) window.LA.onEnd(message);
     Sound.gameover();
     turnIndicator.textContent = message;
     checkIndicator.textContent = '';
