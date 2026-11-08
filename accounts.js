@@ -22,9 +22,7 @@
     }
     return btoa(salt + pw);
   }
-  async function signup(name, pw) {
-    if (window.Cloud) return window.Cloud.login(name, pw);
-    const u = users()[name.toLowerCase()];
+    async function signup(name, pw) {
     if (window.Cloud) return window.Cloud.signup(name, pw);
     if (!/^[A-Za-z0-9_]{3,16}$/.test(name)) return 'Username: 3-16 letters, numbers or _';
     if (pw.length < 4) return 'Password must be at least 4 characters';
@@ -35,7 +33,8 @@
     put('lac-users', all); put('lac-session', key);
     return null;
   }
-  async function login(name, pw) {
+    async function login(name, pw) {
+    if (window.Cloud) return window.Cloud.login(name, pw);
     const u = users()[name.toLowerCase()];
     if (!u || u.h !== await hash(pw, u.salt)) return 'Wrong username or password';
     put('lac-session', u.key);
