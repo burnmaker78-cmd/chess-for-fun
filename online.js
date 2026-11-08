@@ -30,8 +30,10 @@
 
   function wire(c) {
     conn = c;
+    window.LA.send = o => { if (c.open) c.send(o); };
     c.on('data', d => {
       if (!d) return;
+      if (window.LA.onData) window.LA.onData(d);
       if (d.t === 'start') begin('b', d.chaos);          // joiner: host decides the rules
       if (d.t === 'move') {
         window.LA.remote = true;
