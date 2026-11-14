@@ -11,15 +11,22 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth(), db = firebase.firestore();
   const em = n => n.toLowerCase() + '@lachess.invalid';
+  const BLOCKED = ['fuck', 'shit', 'bitch', 'cunt', 'nazi', 'rape', 'nigg', 'fagg', 'dick', 'pussy'];
   const get = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v === null ? d : v; } catch (e) { return d; } };
   const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const cache = rec => { const all = get('lac-users', {}); all[rec.key] = rec; put('lac-users', all); put('lac-session', rec.key); };
   const load = async key => { const s = await db.collection('users').doc(key).get(); return s.exists ? s.data() : null; };
 
   window.Cloud = {
+    async top() {
+      const s = await db.collection('users').orderBy('elo', 'desc').limit(20).get();
+      return s.docs.map(d => d.data());
+    },
     async signup(name, pw) {
       if (!/^[A-Za-z0-9_]{3,16}$/.test(name)) return 'Username: 3-16 letters, numbers or _';
       if (pw.length < 6) return 'Password must be at least 6 characters';
+      const norm = name.toLowerCase().replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/7/g, 't').replace(/_/g, '');
+      if (BLOCKED.some(w => norm.includes(w))) return 'That username isn’t allowed';
       const key = name.toLowerCase();
       try { await auth.createUserWithEmailAndPassword(em(name), pw); }
       catch (e) { return e.code === 'auth/email-already-in-use' ? 'Account already made' : 'Sign-up failed (' + e.code + ')'; }
