@@ -36,6 +36,17 @@
   const tabs = document.querySelector('#screen-lobby .lobby-tabs');
   if (tabs) tabs.parentNode.insertBefore(lobbyBox, tabs);
   $('tc-lobby').addEventListener('change', e => { $('tc-custom').style.display = e.target.value === 'custom' ? 'block' : 'none'; });
+    const botBox = document.createElement('div');
+  botBox.className = 'tc-box';
+  botBox.innerHTML = `<label>⏱ Time control </label>
+    <select id="tc-bots">
+      <option value="none">No clock</option><option value="10|0">10 min</option><option value="5|0">5 min</option>
+      <option value="5|1">5 min + 1 sec</option><option value="custom">Custom…</option>
+    </select>
+    <div class="tc-custom" id="tc-bots-custom">Minutes <input id="tc-bots-min" type="number" min="1" max="180" value="15"> Increment (sec) <input id="tc-bots-inc" type="number" min="0" max="60" value="10"></div>`;
+  const botList = $('bot-list');
+  if (botList) botList.parentNode.insertBefore(botBox, botList);
+  $('tc-bots').addEventListener('change', e => { $('tc-bots-custom').style.display = e.target.value === 'custom' ? 'block' : 'none'; });
 
   const find = $('rk-find');
   if (find) {
@@ -53,6 +64,12 @@
     const [m, i] = v.split('|'); return { min: +m, inc: +i };
   }
   function readRanked() { const [m, i] = $('tc-ranked').value.split('|'); return { min: +m, inc: +i }; }
+  function readBots() {
+    const v = $('tc-bots').value;
+    if (v === 'none') return null;
+    if (v === 'custom') return { min: clamp($('tc-bots-min').value, 1, 180, 15), inc: clamp($('tc-bots-inc').value, 0, 60, 10) };
+    const [m, i] = v.split('|'); return { min: +m, inc: +i };
+  }
 
   /* ---------- clock engine ---------- */
   const fmt = ms => {
@@ -89,7 +106,7 @@
     g.clock = null;
     let tc = null;
     if (g.type === 'friend') tc = readLobby();
-    else if (g.type === 'bot' && g.bot && g.bot.ranked) tc = readRanked();
+    else if (g.type === 'bot' && g.bot) tc = g.bot.ranked ? readRanked() : readBots();
     else if (g.type === 'online' && window.LA.myColor === 'w') {
       tc = readLobby();
       if (window.LA.send) window.LA.send({ t: 'tc', min: tc ? tc.min : 0, inc: tc ? tc.inc : 0 });
