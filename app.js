@@ -500,6 +500,7 @@ function makePieceEl(color, type) {
   }
 
   function makeMove(from, move, promotionType) {
+    if (game.gameOver) return;
     const piece = game.board[from.r][from.c];
     const chaos = isChaosColor(piece.color);
 
