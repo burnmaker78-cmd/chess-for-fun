@@ -41,7 +41,7 @@
   function isSquareAttacked(board, r, c, byColor) {
     const dir = byColor === 'w' ? -1 : 1;
     for (const dc of [-1, 1]) {
-      const pr = r + dir, pc = c + dc;
+      const pr = r - dir, pc = c + dc;
       if (inBounds(pr, pc)) {
         const p = board[pr][pc];
         if (p && p.type === 'p' && p.color === byColor) return true;
@@ -173,6 +173,24 @@
     if (!piece) return [];
     const promoRow = piece.color === 'w' ? 0 : 7;
     const moves = [];
+   if (piece.type === 'k') {
+      for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+        let rr = r + dr, rc = c + dc, rook = null;
+        while (inBounds(rr, rc)) {
+          const p = board[rr][rc];
+          if (p && p.color === piece.color && p.type === 'r') { rook = { r: rr, c: rc }; break; }
+          rr += dr; rc += dc;
+        }
+        if (!rook) continue;
+        const k1 = { r: r + dr, c: c + dc }, k2 = { r: r + 2 * dr, c: c + 2 * dc };
+        if (!inBounds(k2.r, k2.c)) continue;
+        const a = board[k1.r][k1.c], b2 = board[k2.r][k2.c];
+        const isRook = (s, q) => q && s.r === rook.r && s.c === rook.c;
+        if (a && !isRook(k1, a)) continue;
+        if (b2 && b2.color === piece.color && !isRook(k2, b2)) continue;
+        moves.push({ r: k2.r, c: k2.c, capture: !!b2 && !isRook(k2, b2), castle: 'beta', rook, rookTo: k1, chaos: true });
+      }
+    }
     for (let nr = 0; nr < 8; nr++)
       for (let nc = 0; nc < 8; nc++) {
         if (nr === r && nc === c) continue;
@@ -187,12 +205,17 @@
   function applyMove(board, from, to, move, promotionType) {
     const b = cloneBoard(board);
     const piece = b[from.r][from.c];
-    const captured = b[to.r][to.c];
+    const betaRook = move.castle === 'beta' ? b[move.rook.r][move.rook.c] : null;
+    const captured = (betaRook && move.rook.r === to.r && move.rook.c === to.c) ? null : b[to.r][to.c];
 
     if (move.enPassant) b[from.r][to.c] = null;
 
     b[to.r][to.c] = { ...piece, hasMoved: true };
     b[from.r][from.c] = null;
+   if (betaRook) {
+      if (!(move.rook.r === to.r && move.rook.c === to.c)) b[move.rook.r][move.rook.c] = null;
+      b[move.rookTo.r][move.rookTo.c] = { ...betaRook, hasMoved: true };
+    }
 
     if (move.promotion) b[to.r][to.c].type = promotionType || 'q';
 
