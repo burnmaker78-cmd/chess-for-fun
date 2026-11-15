@@ -180,7 +180,7 @@
         let rr = r + dr, rc = c + dc, rook = null;
         while (inBounds(rr, rc)) {
           const p = board[rr][rc];
-          if (p && p.color === piece.color && p.type === 'r') { rook = { r: rr, c: rc }; break; }
+          if (p && p.color === piece.color && p.type !== 'k') { rook = { r: rr, c: rc }; break; }
           rr += dr; rc += dc;
         }
         if (!rook) continue;
