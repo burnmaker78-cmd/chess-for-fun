@@ -453,14 +453,16 @@ function makePieceEl(color, type) {
    }
 
     const piece = game.board[r][c];
-    const target = game.legalTargets.find(t => t.r === r && t.c === c);
+    let target = game.legalTargets.find(t => t.r === r && t.c === c);
+    if (!target && game.selected && game.chaosTargets) target = game.chaosTargets.find(t => t.r === r && t.c === c);
     if (game.selected && target) {
       makeMove(game.selected, target);
       return;
     }
     if (piece && piece.color === game.turn) {
       game.selected = { r, c };
-      game.legalTargets = R.legalMovesForSquare(game.board, r, c, game.enPassantTarget, isChaosColor);
+      game.legalTargets = R.legalMovesForSquare(game.board, r, c, game.enPassantTarget, null);
+      game.chaosTargets = isChaosColor(piece.color) ? R.legalMovesForSquare(game.board, r, c, game.enPassantTarget, isChaosColor) : null;
     } else {
       game.selected = null;
       game.legalTargets = [];
