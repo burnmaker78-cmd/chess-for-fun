@@ -18,6 +18,10 @@
   const load = async key => { const s = await db.collection('users').doc(key).get(); return s.exists ? s.data() : null; };
 
   window.Cloud = {
+    async getUser(k) {
+      const s = await db.collection('users').doc(String(k).toLowerCase()).get();
+      return s.exists ? s.data() : null;
+    },
     async top() {
       const s = await db.collection('users').orderBy('elo', 'desc').limit(20).get();
       return s.docs.map(d => d.data());
@@ -46,8 +50,8 @@
     logout() { auth.signOut(); },
     saveElo(rec) {
       if (!auth.currentUser) return;
-      db.collection('users').doc(rec.key).set({ name: rec.name, key: rec.key, elo: rec.elo, w: rec.w, l: rec.l, d: rec.d }).catch(() => {});
-    }
+      db.collection('users').doc(rec.key).set(rec, { merge: true }).catch(() => {});
+    },
   };
 
   // restore the session on page load / keep it in sync
