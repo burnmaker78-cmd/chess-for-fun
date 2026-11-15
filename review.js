@@ -96,8 +96,9 @@
     const hanging = R.isSquareAttacked(played.board, m.move.r, m.move.c, opp);
 
     let cls;
-    if (loss <= 20 && hanging && piece && VAL[piece.type] >= 300 && playedPOV >= staticBefore - 60) cls = 'brilliant';
-    else if (loss <= 10 && playedPOV - staticBefore >= 150) cls = 'great';
+    const defended = R.isSquareAttacked(played.board, m.move.r, m.move.c, color);
+    if (loss <= 5 && hanging && !defended && piece && VAL[piece.type] >= 300 && staticBefore < 100 && playedPOV >= staticBefore - 30) cls = 'brilliant';
+    else if (loss <= 5 && !m.before[m.move.r][m.move.c] && playedPOV - staticBefore >= 250) cls = 'great';
     else if (i < 6 && loss <= 40) cls = 'book';
     else if (loss <= 10) cls = 'best';
     else if (loss <= 30) cls = 'excellent';
