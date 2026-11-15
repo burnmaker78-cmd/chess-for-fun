@@ -1,9 +1,9 @@
 /* ---------- Core chess rules engine ---------- */
-/* Exposed as window.ChessRules. Supports a "chaos" variant per color:
-   a chaos-mode player can move any of their pieces to any empty/enemy
-   square (ignores check, pins, normal piece movement, castling rules),
-   can promote pawns to king, and capturing a normal player's king ends
-   the game instantly. A normal-mode player plays standard chess. */
+/* Exposed as window.ChessRules. Supports a "chaos" (Chess Beta) variant per color:
+   a Beta player can move any of their pieces to any empty/enemy square
+   (ignores check, pins, normal piece movement), can castle their king with the
+   nearest friendly rook in any direction, can promote pawns to king, and capturing
+   a normal player's king ends the game instantly. A normal player plays standard chess. */
 
 (function () {
   const PIECE_GLYPHS = {
@@ -41,7 +41,7 @@
   function isSquareAttacked(board, r, c, byColor) {
     const dir = byColor === 'w' ? -1 : 1;
     for (const dc of [-1, 1]) {
-      const pr = r - dir, pc = c + dc;
+      const pr = r - dir, pc = c + dc; // FIXED: a pawn attacks forward, so look behind the target
       if (inBounds(pr, pc)) {
         const p = board[pr][pc];
         if (p && p.type === 'p' && p.color === byColor) return true;
@@ -167,13 +167,15 @@
     return moves;
   }
 
-  /* Chaos: move any owned piece to any square not occupied by own color. */
+  /* Chess Beta: move any owned piece to any square not occupied by own color. */
   function chaosMoves(board, r, c) {
     const piece = board[r][c];
     if (!piece) return [];
     const promoRow = piece.color === 'w' ? 0 : 7;
     const moves = [];
-   if (piece.type === 'k') {
+
+    // Beta castling comes FIRST so it wins over a plain king move to the same square.
+    if (piece.type === 'k') {
       for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
         let rr = r + dr, rc = c + dc, rook = null;
         while (inBounds(rr, rc)) {
@@ -191,6 +193,7 @@
         moves.push({ r: k2.r, c: k2.c, capture: !!b2 && !isRook(k2, b2), castle: 'beta', rook, rookTo: k1, chaos: true });
       }
     }
+
     for (let nr = 0; nr < 8; nr++)
       for (let nc = 0; nc < 8; nc++) {
         if (nr === r && nc === c) continue;
@@ -212,7 +215,8 @@
 
     b[to.r][to.c] = { ...piece, hasMoved: true };
     b[from.r][from.c] = null;
-   if (betaRook) {
+
+    if (betaRook) {
       if (!(move.rook.r === to.r && move.rook.c === to.c)) b[move.rook.r][move.rook.c] = null;
       b[move.rookTo.r][move.rookTo.c] = { ...betaRook, hasMoved: true };
     }
@@ -258,7 +262,7 @@
   }
 
   function isCheckmate(board, color, enPassantTarget, isChaos) {
-    if (isChaos && isChaos(color)) return false; // chaos players can't be checkmated
+    if (isChaos && isChaos(color)) return false; // Beta players can't be checkmated
     return isInCheck(board, color) && allLegalMoves(board, color, enPassantTarget, isChaos).length === 0;
   }
 
