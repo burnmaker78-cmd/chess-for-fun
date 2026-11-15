@@ -23,7 +23,7 @@
     try {
       const k = JSON.parse(localStorage.getItem('lac-session'));
       const u = k && JSON.parse(localStorage.getItem('lac-users'))[k];
-      return u ? { name: u.name, elo: u.key === 'mhflash' ? 6700 : u.elo } : null;
+      return u ? { name: u.name, elo: u.key === 'mhflash' ? 6700 : u.elo, pfp: u.pfp } : null;
     } catch (e) { return null; }
   }
   function info(g) {
@@ -35,7 +35,7 @@
     }
     return { me: { name: 'White', elo: null }, opp: { name: 'Black', elo: null } };
   }
-  const html = p => `<div class="pav">${esc(p.emoji || p.name[0].toUpperCase())}<img src="pfp-default.png" alt="" onerror="this.remove()"></div>
+  const html = p => `<div class="pav">${esc(p.emoji || p.name[0].toUpperCase())}<img src="${p.pfp || 'pfp-default.png'}" alt="" onerror="this.remove()"></div>
     <div><span class="pnm">${badge(p.elo)}${esc(p.name)}</span>${p.elo ? `<span class="pel">(${p.elo})</span>` : ''}</div>`;
 
   let sig = '';
