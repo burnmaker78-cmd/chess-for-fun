@@ -163,5 +163,5 @@
     if (!V || $('screen-viewer').classList.contains('hidden')) return;
     if (e.key === 'ArrowRight') go(V.idx + 1); else if (e.key === 'ArrowLeft') go(V.idx - 1);
   });
-  window.LAOpen = open;
+  window.LAOpen = open; window.LAV = { get: () => V };
 })();
