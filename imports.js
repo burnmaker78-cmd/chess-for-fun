@@ -103,7 +103,7 @@
       const games = await ($('im-src').value === 'lichess' ? fromLichess : fromChesscom)(u);
       if (!games.length) { list.textContent = 'No standard games found for that player.'; return; }
       list.innerHTML = games.map((g, i) => `<div class="gm-row" data-i="${i}"><span class="gm-res ${verdict(g)}">${verdict(g)}</span>
-        <div><b>${esc(u)} vs ${esc(g.opp)}${g.oppElo ? ' (' + g.oppElo + ')' : ''}</b><small>${esc(g.tc)} · ${g.res} · ${new Date(g.id).toLocaleDateString()}</small></div></div>`).join('');
+        <div><b>${g.me === 'b' ? '⬛' : '⬜'} ${esc(u)} vs ${g.me === 'b' ? '⬜' : '⬛'} ${esc(g.opp)}${g.oppElo ? ' (' + g.oppElo + ')' : ''}</b><small>${g.me === 'b' ? 'Black' : 'White'} · ${esc(g.tc)} · ${g.res} · ${new Date(g.id).toLocaleDateString()}</small></div></div>`).join('');
       list.querySelectorAll('.gm-row').forEach(row => row.onclick = () => {
         const g = games[+row.dataset.i];
         if (!window.LAOpen) { alert('The game viewer isn’t loaded (games.js is missing the LAOpen line).'); return; }

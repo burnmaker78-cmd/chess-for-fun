@@ -66,9 +66,10 @@
 
   /* ---------- game lists ---------- */
   const verdict = g => g.res === '1/2-1/2' ? 'D' : ((g.res === '1-0' && g.me === 'w') || (g.res === '0-1' && g.me === 'b')) ? 'W' : 'L';
+  const tag = c => c === 'b' ? '⬛' : '⬜';
   function rows(games, who) {
     return games.map((g, i) => `<div class="gm-row" data-i="${i}"><span class="gm-res ${verdict(g)}">${verdict(g)}</span>
-      <div><b>${esc(who ? who + ' vs ' : 'vs ')}${esc(g.opp)}${g.oppElo ? ' (' + g.oppElo + ')' : ''}</b><small>${esc(g.tc)} · ${g.res} · ${new Date(g.id).toLocaleDateString()}</small></div></div>`).join('');
+      <div><b>${tag(g.me)} ${esc(who || 'You')} vs ${tag(g.me === 'b' ? 'w' : 'b')} ${esc(g.opp)}${g.oppElo ? ' (' + g.oppElo + ')' : ''}</b><small>${g.me === 'b' ? 'Black' : 'White'} · ${esc(g.tc)} · ${g.res} · ${new Date(g.id).toLocaleDateString()}</small></div></div>`).join('');
   }
   function bind(box, games, who) {
     box.querySelectorAll('.gm-row').forEach(r => r.onclick = () => open(games[+r.dataset.i], who));
@@ -112,8 +113,9 @@
   function open(g, who) {
     const states = replay(g.mv);
     V = { g, states, orig: states.slice(), idx: 0, flip: g.me === 'b', sel: null, exploring: false, ret: visible() };
-    $('vw-title').textContent = `${who ? who + ' vs ' : 'You vs '}${g.opp}${g.oppElo ? ' (' + g.oppElo + ')' : ''}`;
-    $('vw-sub').textContent = `${g.res} · ${g.tc} · ${new Date(g.id).toLocaleDateString()}`;
+    const mine = who || 'You', oe = g.oppElo ? ' (' + g.oppElo + ')' : '';
+    $('vw-title').textContent = g.me === 'b' ? `⬜ ${g.opp}${oe} vs ⬛ ${mine}` : `⬜ ${mine} vs ⬛ ${g.opp}${oe}`;
+    $('vw-sub').textContent = `${mine} played ${g.me === 'b' ? 'Black' : 'White'} · ${g.res} · ${g.tc} · ${new Date(g.id).toLocaleDateString()}`;
     const toks = g.mv.split(' ').filter(Boolean);
     $('vw-list').innerHTML = toks.map((t, i) => `<li data-i="${i + 1}"><span class="mn">${Math.floor(i / 2) + 1}${i % 2 ? '…' : '.'}</span><span>${t}</span></li>`).join('');
     $('vw-list').querySelectorAll('li').forEach(li => li.onclick = () => { if (!V.exploring) go(+li.dataset.i); });
