@@ -176,9 +176,11 @@
     if (!V || !A || !A.done || V.exploring) return;
     const k = V.idx - 1, r = A.res[k];
     if (!r) return;
-    const mv = (V.g.mv.split(' ')[k] || '').slice(0, 4);
+    const raw = V.g.mv.split(' ')[k] || '', pre = V.orig[k];
+    const mv = window.LASan && pre ? window.LASan(pre.board, pre.ep, raw) : raw.slice(0, 4);
     const good = ['best', 'great', 'brilliant', 'book'].includes(r.cls);
-    const bestTxt = r.best ? `${sqn(r.best.from.r, r.best.from.c)}→${sqn(r.best.to.r, r.best.to.c)}` : '';
+    const bu = r.best ? sqn(r.best.from.r, r.best.from.c) + sqn(r.best.to.r, r.best.to.c) : '';
+    const bestTxt = bu && window.LASan && pre ? window.LASan(pre.board, pre.ep, bu) : bu;
     $('vw-note').innerHTML = `${badge(r.cls)} <b style="color:${CL[r.cls][0]}">${mv} is ${/^[aeiou]/i.test(CL[r.cls][2]) ? 'an' : 'a'} ${CL[r.cls][2].toLowerCase()}</b>` +
       (good || !bestTxt ? '' : `<br><small>Best was ${bestTxt} (shown in green)</small>`);
     if (!good && r.best) {

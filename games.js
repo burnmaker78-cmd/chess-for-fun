@@ -117,7 +117,7 @@
     $('vw-title').textContent = g.me === 'b' ? `⬜ ${g.opp}${oe} vs ⬛ ${mine}` : `⬜ ${mine} vs ⬛ ${g.opp}${oe}`;
     $('vw-sub').textContent = `${mine} played ${g.me === 'b' ? 'Black' : 'White'} · ${g.res} · ${g.tc} · ${new Date(g.id).toLocaleDateString()}`;
     const toks = g.mv.split(' ').filter(Boolean);
-    $('vw-list').innerHTML = toks.map((t, i) => `<li data-i="${i + 1}"><span class="mn">${Math.floor(i / 2) + 1}${i % 2 ? '…' : '.'}</span><span>${t}</span></li>`).join('');
+    $('vw-list').innerHTML = toks.map((t, i) => `<li data-i="${i + 1}"><span class="mn">${Math.floor(i / 2) + 1}${i % 2 ? '…' : '.'}</span><span>${states[i] && window.LASan ? window.LASan(states[i].board, states[i].ep, t) : t}</span></li>`).join('');
     $('vw-list').querySelectorAll('li').forEach(li => li.onclick = () => { if (!V.exploring) go(+li.dataset.i); });
     show('screen-viewer'); draw();
   }
