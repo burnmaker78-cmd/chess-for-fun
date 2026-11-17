@@ -22,6 +22,9 @@
       const s = await db.collection('users').doc(String(k).toLowerCase()).get();
       return s.exists ? s.data() : null;
     },
+    async sendChallenge(to, data) { await db.collection('challenges').doc(String(to).toLowerCase()).set(data); },
+    watchChallenges(key, cb) { return db.collection('challenges').doc(key).onSnapshot(s => { if (s.exists) cb(s.data()); }, () => {}); },
+    clearChallenge(key) { return db.collection('challenges').doc(key).delete().catch(() => {}); },
     async top() {
       const s = await db.collection('users').orderBy('elo', 'desc').limit(20).get();
       return s.docs.map(d => d.data());
