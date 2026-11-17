@@ -97,9 +97,16 @@
         if (performance.now() - g._flagAt < 3000) return;
       } else if (window.LA.send) window.LA.send({ t: 'timeout' });
     }
-    end(g, timeMsg(color));
+    end(g, outcome(g, color));
   }
-
+  function outcome(g, loser) {
+    const win = loser === 'w' ? 'b' : 'w';
+    let onlyMinor = true, minors = 0;
+    g.board.forEach(row => row.forEach(p => {
+      if (p && p.color === win && p.type !== 'k') { if (p.type === 'n' || p.type === 'b') minors++; else onlyMinor = false; }
+    }));
+    return onlyMinor && minors <= 1 ? `Draw — time ran out, but ${win === 'w' ? 'White' : 'Black'} can’t checkmate` : timeMsg(loser);
+  }
   let lastG = null;
   function init(g) {
     if (g.clock !== undefined) return;
@@ -142,7 +149,7 @@
   window.LA.onData = d => {
     const g = G();
     if (d.t === 'tc' && g && d.min > 0) setClock(g, { min: d.min, inc: d.inc });
-    if (d.t === 'timeout' && g) end(g, timeMsg(window.LA.myColor === 'w' ? 'b' : 'w'));
+    if (d.t === 'timeout' && g) end(g, outcome(g, window.LA.myColor === 'w' ? 'b' : 'w'));
     if (prev) prev(d);
   };
 })();
