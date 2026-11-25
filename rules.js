@@ -173,6 +173,16 @@
     if (!piece) return [];
     const promoRow = piece.color === 'w' ? 0 : 7;
     const moves = [];
+       {
+      const dir = piece.color === 'w' ? -1 : 1;
+      for (const dc of [-1, 1]) {
+        const q = inBounds(r, c + dc) ? board[r][c + dc] : null;
+        const d2r = r + dir, d2c = c + dc;
+        if (q && q.color !== piece.color && inBounds(d2r, d2c) && !board[d2r][d2c]) {
+          moves.push({ r: d2r, c: d2c, capture: true, enPassant: true, chaos: true });
+        }
+      }
+    }
 
     // Beta castling comes FIRST so it wins over a plain king move to the same square.
     if (piece.type === 'k') {
@@ -211,7 +221,8 @@
     const betaRook = move.castle === 'beta' ? b[move.rook.r][move.rook.c] : null;
     const captured = (betaRook && move.rook.r === to.r && move.rook.c === to.c) ? null : b[to.r][to.c];
 
-    if (move.enPassant) b[from.r][to.c] = null;
+   const epVictim = move.enPassant ? b[from.r][to.c] : null; 
+   if (move.enPassant) b[from.r][to.c] = null;
 
     b[to.r][to.c] = { ...piece, hasMoved: true };
     b[from.r][from.c] = null;
@@ -231,7 +242,7 @@
       b[row][3] = b[row][0]; b[row][3].hasMoved = true; b[row][0] = null;
     }
 
-    const capturedPiece = move.enPassant ? { type: 'p', color: piece.color === 'w' ? 'b' : 'w' } : captured;
+   const capturedPiece = move.enPassant ? (epVictim ? { type: epVictim.type, color: epVictim.color } : { type: 'p', color: piece.color === 'w' ? 'b' : 'w' }) : captured;
     return { board: b, captured: capturedPiece };
   }
 
