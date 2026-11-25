@@ -22,10 +22,9 @@
   const uci = s => ({ from: { r: 8 - +s[1], c: FILES.indexOf(s[0]) }, to: { r: 8 - +s[3], c: FILES.indexOf(s[2]) } });
 
   /* ---------- Stockfish ---------- */
-  let ENG = null;
-  function loadEngine() {
-    if (ENG) return ENG;
-    ENG = new Promise((res, rej) => {
+  const POOL = [], CACHE = {};
+  function spawn() {
+    return new Promise((res, rej) => {
       let w;
       try { w = new Worker(ENGINE_FILE); } catch (e) { return rej(e); }
       const t = setTimeout(() => rej(new Error('timeout')), 25000);
@@ -37,10 +36,12 @@
       };
       w.postMessage('uci');
     });
-    ENG.catch(() => { ENG = null; });
-    return ENG;
   }
-  function evalPos(w, moves) { // score is from the side to move's point of view
+  async function getPool(n) {
+    while (POOL.length < n) { try { POOL.push(await spawn()); } catch (e) { if (!POOL.length) throw e; break; } }
+    return POOL.slice(0, n);
+  }
+  function evalPos(w, moves, ms) { // score is from the side to move's point of view
     return new Promise(res => {
       const sc = {};
       w.onmessage = e => {
@@ -51,7 +52,7 @@
         } else if (l.startsWith('bestmove')) res({ cp: sc[1], second: sc[2], best: l.split(' ')[1] });
       };
       w.postMessage('position startpos' + (moves.length ? ' moves ' + moves.join(' ') : ''));
-      w.postMessage('go movetime 450');
+      w.postMessage('go movetime ' + (ms || 300));
     });
   }
 
@@ -61,13 +62,21 @@
     const played = toks[i].slice(0, 4), isBest = !!ev[i].best && ev[i].best.slice(0, 4) === played;
     const gap = ev[i].second === undefined ? 0 : before - wp(ev[i].second);
     const f = nx.last.from, t = nx.last.to, piece = st.board[f.r][f.c], cap = st.board[t.r][t.c], opp = color === 'w' ? 'b' : 'w';
-    const hanging = R.isSquareAttacked(nx.board, t.r, t.c, opp), defended = R.isSquareAttacked(nx.board, t.r, t.c, color);
-    const sac = hanging && piece && VAL[piece.type] >= 300 && (!defended || VAL[piece.type] >= 500) && (!cap || VAL[cap.type] + 100 < VAL[piece.type]);
+    const defended = R.isSquareAttacked(nx.board, t.r, t.c, color);
+    // cheapest enemy piece that can legally take the moved piece
+    let low = 99999;
+    for (let rr = 0; rr < 8; rr++) for (let cc = 0; cc < 8; cc++) {
+      const q = nx.board[rr][cc];
+      if (q && q.color === opp && R.legalMovesForSquare(nx.board, rr, cc, null, null).some(m => m.r === t.r && m.c === t.c)) low = Math.min(low, VAL[q.type]);
+    }
+    // material result of the whole exchange: what we win, minus our piece, plus what we win back if it was defended
+    const net = (cap ? VAL[cap.type] : 0) - (piece ? VAL[piece.type] : 0) + (defended && low < 99999 ? low : 0);
+    const sac = !!piece && VAL[piece.type] >= 300 && low < 99999 && net <= -100;
     let cls;
     if (isBest || drop <= 1) {
       cls = 'best';
-      if (gap >= 12 && after >= 40) cls = 'great';
-      if (sac && drop <= 2 && after >= 50 && before < 92 && gap >= 3) cls = 'brilliant';
+      if (gap >= 12 && after >= 25) cls = 'great';
+      if (sac && drop <= 3 && after >= 20 && before < 96 && gap >= 2) cls = 'brilliant';
       if (cls === 'best' && i < 6) cls = 'book';
     } else if (drop <= 2) cls = i < 6 ? 'book' : 'excellent';
     else if (drop <= 5) cls = 'good';
@@ -113,6 +122,10 @@
   const btn = document.createElement('button');
   btn.id = 'vr-btn'; btn.className = 'review-btn'; btn.textContent = '★ Review';
   ctl.appendChild(btn);
+  const spd = document.createElement('select');
+  spd.id = 'vr-speed'; spd.style.cssText = 'padding:8px;border-radius:8px';
+  spd.innerHTML = '<option value="fast">Fast</option><option value="normal">Normal</option><option value="deep">Deep</option>';
+  ctl.appendChild(spd);
   const info = document.createElement('div');
   info.innerHTML = '<p id="vr-prog" class="rv-note"></p><p id="vr-acc" class="rv-note"></p>';
   ctl.parentNode.insertBefore(info, ctl.nextSibling);
@@ -130,16 +143,27 @@
     const prog = t => { $('vr-prog').textContent = t; };
     const alive = () => cur() && cur().g === g;
     try {
-      let w = null;
+      let pool = null;
       prog('Loading Stockfish…');
-      try { w = await loadEngine(); } catch (e) { w = null; }
-      if (w) {
-        const toks = g.mv.split(' ').filter(Boolean).slice(0, n), ev = [];
-        for (let i = 0; i <= n; i++) {
-          if (!alive()) { A = null; prog(''); busy = false; return; }
-          const r = await evalPos(w, toks.slice(0, i));
-          if (r.cp === undefined) r.cp = (r.best === '(none)' && R.isInCheck(states[i].board, states[i].turn)) ? -10000 : 0;
-          ev.push(r); prog(`Stockfish analyzing ${i}/${n}…`);
+      const ms = { fast: 150, normal: 300, deep: 600 }[($('vr-speed') || { value: 'fast' }).value] || 150;
+      try { pool = await getPool(Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1))); } catch (e) { pool = null; }
+      if (pool) {
+        const toks = g.mv.split(' ').filter(Boolean).slice(0, n), ckey = g.mv + '|' + ms;
+        let ev = CACHE[ckey];
+        if (!ev) {
+          ev = []; let next = 0, done = 0, dead = false;
+          await Promise.all(pool.map(async w => {
+            while (!dead) {
+              const i = next++;
+              if (i > n) break;
+              if (!alive()) { dead = true; break; }
+              const r = await evalPos(w, toks.slice(0, i), ms);
+              if (r.cp === undefined) r.cp = (r.best === '(none)' && R.isInCheck(states[i].board, states[i].turn)) ? -10000 : 0;
+              ev[i] = r; done++; prog(`Stockfish analyzing ${done}/${n + 1}…`);
+            }
+          }));
+          if (dead) { A = null; prog(''); busy = false; return; }
+          CACHE[ckey] = ev;
         }
         for (let i = 0; i < n; i++) A.res.push(classifyEngine(states, toks, ev, i));
       } else {
@@ -151,7 +175,7 @@
           await new Promise(x => setTimeout(x, 0));
         }
       }
-      finish(!!w);
+      finish(!!pool);
     } catch (e) { prog('Review failed: ' + e.message); }
     busy = false;
   };
