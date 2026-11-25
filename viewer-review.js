@@ -21,6 +21,24 @@
   const accOf = drop => Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * drop) - 3.1669));
   const uci = s => ({ from: { r: 8 - +s[1], c: FILES.indexOf(s[0]) }, to: { r: 8 - +s[3], c: FILES.indexOf(s[2]) } });
 
+  // biggest piece (minor or larger) of `color` that the other side can win, counting recaptures
+  function exposure(board, color) {
+    const opp = color === 'w' ? 'b' : 'w';
+    let worst = 0;
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (!p || p.color !== color || p.type === 'k' || VAL[p.type] < 300) continue;
+      let low = 99999;
+      for (let rr = 0; rr < 8; rr++) for (let cc = 0; cc < 8; cc++) {
+        const q = board[rr][cc];
+        if (q && q.color === opp && R.legalMovesForSquare(board, rr, cc, null, null).some(m => m.r === r && m.c === c)) low = Math.min(low, VAL[q.type]);
+      }
+      if (low === 99999) continue;
+      worst = Math.max(worst, VAL[p.type] - (R.isSquareAttacked(board, r, c, color) ? low : 0));
+    }
+    return worst;
+  }
+
   /* ---------- Stockfish ---------- */
   const POOL = [], CACHE = {};
   function spawn() {
@@ -72,11 +90,13 @@
     // material result of the whole exchange: what we win, minus our piece, plus what we win back if it was defended
     const net = (cap ? VAL[cap.type] : 0) - (piece ? VAL[piece.type] : 0) + (defended && low < 99999 ? low : 0);
     const sac = !!piece && VAL[piece.type] >= 300 && low < 99999 && net <= -100;
+    // bait: this move newly leaves a big piece en prise (like a queen), yet the engine still likes it
+    const exAfter = exposure(nx.board, color), bait = exAfter >= 250 && exAfter > exposure(st.board, color) + 100;
     let cls;
     if (isBest || drop <= 1) {
       cls = 'best';
       if (gap >= 12 && after >= 25) cls = 'great';
-      if (sac && drop <= 3 && after >= 20 && before < 96 && gap >= 2) cls = 'brilliant';
+      if ((sac || bait) && drop <= 3 && after >= 20 && before < 96 && gap >= 2) cls = 'brilliant';
       if (cls === 'best' && i < 6) cls = 'book';
     } else if (drop <= 2) cls = i < 6 ? 'book' : 'excellent';
     else if (drop <= 5) cls = 'good';
@@ -205,7 +225,7 @@
     const good = ['best', 'great', 'brilliant', 'book'].includes(r.cls);
     const bu = r.best ? sqn(r.best.from.r, r.best.from.c) + sqn(r.best.to.r, r.best.to.c) : '';
     const bestTxt = bu && window.LASan && pre ? window.LASan(pre.board, pre.ep, bu) : bu;
-    $('vw-note').innerHTML = `${badge(r.cls)} <b style="color:${CL[r.cls][0]}">${mv} is ${/^[aeiou]/i.test(CL[r.cls][2]) ? 'an' : 'a'} ${CL[r.cls][2].toLowerCase()}</b>` +
+    $('vw-note').innerHTML = `${badge(r.cls)} <b style="color:${CL[r.cls][0]}">${mv} is ${r.cls === 'best' ? 'the best move' : (/^[aeiou]/i.test(CL[r.cls][2]) ? 'an ' : 'a ') + CL[r.cls][2].toLowerCase()}</b>` +
       (good || !bestTxt ? '' : `<br><small>Best was ${bestTxt} (shown in green)</small>`);
     if (!good && r.best) {
       const kids = $('vw-board').children;
