@@ -44,7 +44,7 @@
     if (ghost) { ghost.remove(); ghost = null; }
     if (!wasDragging) return; // plain click: normal click handler runs
     const to = cell(e);
-    if (to >= 0 && to !== from) click(to);       // drop on another square = attempt the move
+    if (to >= 0 && to !== from) { window.__noSlide = true; click(to); setTimeout(() => { window.__noSlide = false; }, 60); }       // drop on another square = attempt the move
     else { const el = sq(from), img = el && el.querySelector('.piece-img'); if (img) img.style.visibility = ''; }
   });
 })();

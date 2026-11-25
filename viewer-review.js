@@ -190,6 +190,15 @@
         if (kids[dr * 8 + dc]) kids[dr * 8 + dc].classList.add('best-sq');
       });
     }
+    const dest = V.orig[k + 1] && V.orig[k + 1].last && V.orig[k + 1].last.to;
+    if (dest) {
+      const sqEl = $('vw-board').children[(V.flip ? 7 - dest.r : dest.r) * 8 + (V.flip ? 7 - dest.c : dest.c)];
+      if (sqEl && !sqEl.querySelector('.rv-corner')) {
+        sqEl.style.position = 'relative';
+        sqEl.insertAdjacentHTML('beforeend', `<div class="rv-corner ${r.cls === 'brilliant' ? 'rv-brill' : ''}">${badge(r.cls)}</div>`);
+        if (r.cls === 'brilliant' || r.cls === 'great') sqEl.insertAdjacentHTML('beforeend', `<div class="rv-burst ${r.cls}"></div>`);
+      }
+    }
     if (window.LAReviewHook) window.LAReviewHook(r, k, V);
   }
   new MutationObserver(decorate).observe($('vw-board'), { childList: true });
