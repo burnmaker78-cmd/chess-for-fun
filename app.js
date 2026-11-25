@@ -459,10 +459,10 @@ function makePieceEl(color, type) {
       makeMove(game.selected, target);
       return;
     }
-    if (piece && piece.color === game.turn) {
+    if (piece && (piece.color === game.turn || isChaosColor(game.turn))) {
       game.selected = { r, c };
       game.legalTargets = R.legalMovesForSquare(game.board, r, c, game.enPassantTarget, null);
-      game.chaosTargets = isChaosColor(piece.color) ? R.legalMovesForSquare(game.board, r, c, game.enPassantTarget, isChaosColor) : null;
+      game.chaosTargets = isChaosColor(game.turn) ? R.legalMovesForSquare(game.board, r, c, game.enPassantTarget, () => true) : null;
     } else {
       game.selected = null;
       game.legalTargets = [];
@@ -504,7 +504,7 @@ function makePieceEl(color, type) {
   function makeMove(from, move, promotionType) {
     if (game.gameOver) return;
     const piece = game.board[from.r][from.c];
-    const chaos = isChaosColor(piece.color);
+    const chaos = isChaosColor(game.turn);
 
     if (move.promotion && !promotionType) {
       game.pendingPromotion = { from, move };
